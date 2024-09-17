@@ -28,7 +28,7 @@ function App() {
       details: 'A healthy salad with grilled chicken, fresh vegetables, and a light dressing.',
       ingredients: ['Chicken', 'Lettuce', 'Tomatoes', 'Cucumbers', 'Dressing'],
       instructions: '1. Grill chicken. 2. Chop vegetables. 3. Mix together with dressing.',
-      category: 'Appetiser',
+      category: 'Appetizer',
       prepTime: '10 minutes',
       cookTime: '15 minutes',
       servings: 2,
