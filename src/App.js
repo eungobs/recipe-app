@@ -38,9 +38,9 @@ function App() {
 
   // Function to add a new recipe to the list
   const addRecipe = (newRecipe) => {
-    setRecipes([
-      ...recipes,
-      { ...newRecipe, id: recipes.length + 1 },
+    setRecipes((prevRecipes) => [
+      ...prevRecipes,
+      { ...newRecipe, id: prevRecipes.length + 1 },
     ]);
   };
 
