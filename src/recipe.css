@@ -1,28 +1,154 @@
-/* recipe.css */
-body {
-  font-family: 'Roboto', sans-serif;
+/* App container */
+.App {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
 }
 
-.MuiAppBar-root {
+/* Recipe Manager Header */
+.App h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* Search and New Recipe Button */
+.App input[type="text"] {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.App button {
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.App button:hover {
+  opacity: 0.8;
+}
+
+.App button:focus {
+  outline: none;
+}
+
+/* New Recipe Modal */
+.modal-container {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.modal-container h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.modal-container input[type="text"],
+.modal-container textarea,
+.modal-container input[type="number"],
+.modal-container input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.modal-container textarea {
+  height: 100px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-buttons button {
+  width: 48%;
+}
+
+.modal-buttons .cancel-button {
+  background: #f0f0f0;
+}
+
+.modal-buttons .submit-button {
+  background: #007bff;
+  color: #fff;
+}
+
+/* Recipe Card */
+.recipe-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.recipe-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.recipe-card .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recipe-card .header strong {
+  font-size: 18px;
+}
+
+.recipe-card .header button {
+  background: transparent;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.recipe-card .header button.delete {
+  color: red;
+}
+
+.recipe-card p {
+  margin: 5px 0;
+}
+
+/* Dark Mode */
+.dark-mode .App {
   background-color: #333;
+  color: #fff;
 }
 
-.MuiPaper-root {
-  padding: 16px;
-  margin-top: 16px;
+.dark-mode .recipe-card {
+  background: #444;
+  border-color: #555;
 }
 
-.MuiTextField-root {
-  margin: 8px 0;
+.dark-mode .modal-container {
+  background: #333;
+  color: #fff;
 }
 
-.MuiButton-containedPrimary {
-  background-color: #1976d2;
+.dark-mode .modal-buttons .submit-button {
+  background: #007bff;
 }
 
-.MuiButton-containedSecondary {
-  background-color: #d32f2f;
-}
 
 /* Media Queries for Responsive Design */
 
