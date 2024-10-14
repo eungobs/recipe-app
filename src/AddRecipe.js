@@ -1,17 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
 import './recipe.css';
 
-const API_URL = 'http://localhost:3001/recipes'; // Adjust the URL as needed
-
-export default function RecipeManager() {
-  const [recipes, setRecipes] = useState([]);
+function AddRecipe() {
+  const [recipes, setRecipes] = useState(() => {
+    // Retrieve recipes from local storage
+    const storedRecipes = localStorage.getItem('recipes');
+    return storedRecipes ? JSON.parse(storedRecipes) : [];
+  });
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [zoomImage, setZoomImage] = useState(null);
+  const [newRecipe, setNewRecipe] = useState({
+    name: '',
+    ingredients: '',
+    instructions: '',
+    category: '',
+    prepTime: '',
+    cookTime: '',
+    servings: '',
+    image: ''
+  });
 
   const recipeNameRef = useRef(null);
   const ingredientsRef = useRef(null);
@@ -22,104 +33,98 @@ export default function RecipeManager() {
   const servingsRef = useRef(null);
   const imageRef = useRef(null);
 
-  const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Beverage', 'Salad', 'Soup', 'Appetizer'];
+  const categories = [
+    'Breakfast', 
+    'Lunch', 
+    'Dinner', 
+    'Snack', 
+    'Dessert', 
+    'Beverage', 
+    'Salad', 
+    'Soup', 
+    'Appetizer'
+  ];
 
   useEffect(() => {
-    // Try to fetch stored recipes from JSON Server on component mount
-    axios.get(API_URL)
-      .then(response => {
-        setRecipes(response.data);
-        // Save recipes to local storage
-        localStorage.setItem('recipes', JSON.stringify(response.data));
-      })
-      .catch(error => {
-        console.error('Error fetching recipes:', error);
-        // Load recipes from local storage if fetch fails
-        const savedRecipes = localStorage.getItem('recipes');
-        if (savedRecipes) {
-          setRecipes(JSON.parse(savedRecipes));
-        } else {
-          console.error('No saved recipes found.');
-        }
-      });
-  }, []);
+    // Update local storage whenever recipes change
+    localStorage.setItem('recipes', JSON.stringify(recipes));
+  }, [recipes]);
 
-  function addOrUpdateRecipe() {
+  const handleAddRecipe = (e) => {
+    e.preventDefault();
     const imageFile = imageRef.current.files[0];
 
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newRecipe = {
-          name: recipeNameRef.current.value,
-          ingredients: ingredientsRef.current.value,
-          instructions: instructionsRef.current.value,
-          category: categoryRef.current.value,
-          prepTime: prepTimeRef.current.value,
-          cookTime: cookTimeRef.current.value,
-          servings: servingsRef.current.value,
-          image: reader.result, // Store image as base64 string
-        };
+    const handleImageUpload = async (file) => {
+      if (file) {
+        const base64Image = await getBase64(file);
+        return base64Image;
+      }
+      return newRecipe.image;
+    };
 
-        saveRecipe(newRecipe);
-      };
-      reader.readAsDataURL(imageFile);
-    } else {
-      const newRecipe = {
-        name: recipeNameRef.current.value,
-        ingredients: ingredientsRef.current.value,
-        instructions: instructionsRef.current.value,
-        category: categoryRef.current.value,
-        prepTime: prepTimeRef.current.value,
-        cookTime: cookTimeRef.current.value,
-        servings: servingsRef.current.value,
-        image: null,
+    handleImageUpload(imageFile).then((base64Image) => {
+      const recipeWithImage = {
+        ...newRecipe,
+        image: base64Image
       };
 
-      saveRecipe(newRecipe);
-    }
-  }
-
-  function saveRecipe(newRecipe) {
-    if (editMode) {
-      // Update existing recipe
-      axios.put(`${API_URL}/${recipes[currentIndex].id}`, newRecipe)
-        .then(() => {
-          const updatedRecipes = [...recipes];
-          updatedRecipes[currentIndex] = { ...newRecipe, id: recipes[currentIndex].id };
-          setRecipes(updatedRecipes);
-          localStorage.setItem('recipes', JSON.stringify(updatedRecipes)); // Save updated recipes
-          setEditMode(false);
-          setCurrentIndex(null);
-          setOpen(false);
-        })
-        .catch(error => console.error('Error updating recipe:', error));
-    } else {
-      // Add new recipe
-      axios.post(API_URL, newRecipe)
-        .then(response => {
-          const newRecipes = [...recipes, response.data];
-          setRecipes(newRecipes);
-          localStorage.setItem('recipes', JSON.stringify(newRecipes)); // Save new recipes
-          setOpen(false);
-        })
-        .catch(error => console.error('Error adding recipe:', error));
-    }
-  }
-
-  function deleteRecipe(index) {
-    const recipeToDelete = recipes[index];
-    axios.delete(`${API_URL}/${recipeToDelete.id}`)
-      .then(() => {
-        const updatedRecipes = recipes.filter((_, i) => i !== index);
+      if (editMode) {
+        // Update existing recipe
+        const updatedRecipes = recipes.map((recipe, index) =>
+          index === currentIndex ? recipeWithImage : recipe
+        );
         setRecipes(updatedRecipes);
-        localStorage.setItem('recipes', JSON.stringify(updatedRecipes)); // Update local storage
-      })
-      .catch(error => console.error('Error deleting recipe:', error));
-  }
+      } else {
+        // Add new recipe
+        setRecipes([...recipes, recipeWithImage]);
+      }
+      resetForm();
+    }).catch((error) => {
+      console.error('Error adding/updating recipe:', error);
+    });
+  };
 
-  function editRecipe(index) {
+  const getBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const resetForm = () => {
+    setOpen(false);
+    setEditMode(false);
+    setCurrentIndex(null);
+    setNewRecipe({
+      name: '',
+      ingredients: '',
+      instructions: '',
+      category: '',
+      prepTime: '',
+      cookTime: '',
+      servings: '',
+      image: ''
+    });
+    recipeNameRef.current.value = '';
+    ingredientsRef.current.value = '';
+    instructionsRef.current.value = '';
+    categoryRef.current.value = '';
+    prepTimeRef.current.value = '';
+    cookTimeRef.current.value = '';
+    servingsRef.current.value = '';
+    imageRef.current.value = '';
+  };
+
+  const handleDeleteRecipe = (index) => {
+    const updatedRecipes = recipes.filter((_, i) => i !== index);
+    setRecipes(updatedRecipes);
+  };
+
+  const handleEditRecipe = (index) => {
     const recipe = recipes[index];
+    setNewRecipe(recipe);
     recipeNameRef.current.value = recipe.name;
     ingredientsRef.current.value = recipe.ingredients;
     instructionsRef.current.value = recipe.instructions;
@@ -130,11 +135,11 @@ export default function RecipeManager() {
     setCurrentIndex(index);
     setEditMode(true);
     setOpen(true);
-  }
+  };
 
-  function searchRecipes(query) {
+  const searchRecipes = (query) => {
     setSearchQuery(query.toLowerCase());
-  }
+  };
 
   const filteredRecipes = recipes.filter((recipe) =>
     recipe.name.toLowerCase().includes(searchQuery) ||
@@ -160,29 +165,31 @@ export default function RecipeManager() {
         {open && (
           <div className="modal-container">
             <h2>{editMode ? 'Edit Recipe' : 'New Recipe'}</h2>
-            <div style={{ marginBottom: '10px' }}>
-              <input type="text" placeholder="Recipe Name" ref={recipeNameRef} className="input-field" />
-              <textarea placeholder="Ingredients" ref={ingredientsRef} className="input-field" />
-              <textarea placeholder="Instructions" ref={instructionsRef} className="input-field" />
-              <select ref={categoryRef} className="input-field category-select">
-                <option value="">Select Category</option>
-                {categories.map((category, index) => (
-                  <option key={index} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              <input type="text" placeholder="Preparation Time" ref={prepTimeRef} className="input-field" />
-              <input type="text" placeholder="Cooking Time" ref={cookTimeRef} className="input-field" />
-              <input type="number" placeholder="Servings" ref={servingsRef} className="input-field" />
-              <input type="file" ref={imageRef} style={{ marginBottom: '10px' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setOpen(false)} className="cancel-button">Cancel</button>
-              <button onClick={addOrUpdateRecipe} className="create-button">
-                {editMode ? 'Update Recipe' : 'Create Recipe'}
-              </button>
-            </div>
+            <form onSubmit={handleAddRecipe}>
+              <div style={{ marginBottom: '10px' }}>
+                <input type="text" placeholder="Recipe Name" ref={recipeNameRef} className="input-field" required />
+                <textarea placeholder="Ingredients" ref={ingredientsRef} className="input-field" required />
+                <textarea placeholder="Instructions" ref={instructionsRef} className="input-field" required />
+                <select ref={categoryRef} className="input-field category-select" required>
+                  <option value="">Select Category</option>
+                  {categories.map((category, index) => (
+                    <option key={index} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Preparation Time" ref={prepTimeRef} className="input-field" required />
+                <input type="text" placeholder="Cooking Time" ref={cookTimeRef} className="input-field" required />
+                <input type="number" placeholder="Servings" ref={servingsRef} className="input-field" required />
+                <input type="file" ref={imageRef} style={{ marginBottom: '10px' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <button type="button" onClick={() => setOpen(false)} className="cancel-button">Cancel</button>
+                <button type="submit" className="create-button">
+                  {editMode ? 'Update Recipe' : 'Create Recipe'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -206,8 +213,8 @@ export default function RecipeManager() {
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <strong>{recipe.name}</strong>
-                <button onClick={() => editRecipe(index)} className="edit-button">Edit</button>
-                <button onClick={() => deleteRecipe(index)} className="delete-button">Delete</button>
+                <button onClick={() => handleEditRecipe(index)} className="edit-button">Edit</button>
+                <button onClick={() => handleDeleteRecipe(index)} className="delete-button">Delete</button>
               </div>
               <p><strong>Ingredients:</strong> {recipe.ingredients}</p>
               <p><strong>Instructions:</strong> {recipe.instructions}</p>
@@ -220,13 +227,16 @@ export default function RecipeManager() {
         ) : (
           <p>No recipes found.</p>
         )}
-      </div>
 
-      {zoomImage && (
-        <div className="zoom-modal" onClick={() => setZoomImage(null)}>
-          <img src={zoomImage} alt="Zoomed" className="zoomed-image" />
-        </div>
-      )}
+        {zoomImage && (
+          <div className="zoom-modal" onClick={() => setZoomImage(null)}>
+            <img src={zoomImage} alt="Zoomed" className="zoomed-image" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+export default AddRecipe;
+
