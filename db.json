@@ -1,3 +1,41 @@
 {
-  "recipes": []
+  "recipes": [
+    {
+      "id": 1,
+      "name": "Pasta",
+      "ingredients": "Noodles, Tomato Sauce",
+      "instructions": "Boil water, cook noodles, add sauce.",
+      "category": "Dinner",
+      "prepTime": "10 mins",
+      "cookTime": "15 mins",
+      "servings": "2",
+      "image": "image_url"
+    },
+    {
+      "id": 2,
+      "name": "Salad",
+      "ingredients": "Lettuce, Tomato, Cucumber, Dressing",
+      "instructions": "Chop ingredients and mix with dressing.",
+      "category": "Lunch",
+      "prepTime": "5 mins",
+      "cookTime": "0 mins",
+      "servings": "1",
+      "image": "image_url"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "password123",
+      "email": "admin@gmail.com"
+    },
+    {
+      "id": 2,
+      "username": "merry mon",
+      "password": "secret",
+      "email": "marry@gmail.com"
+    }
+  ]
 }
+
