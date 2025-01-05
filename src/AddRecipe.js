@@ -50,21 +50,23 @@ function AddRecipe() {
 
   // Array of predefined recipe categories
   const categories = [
-    'Breakfast', 
-    'Lunch', 
-    'Dinner', 
-    'Snack', 
-    'Dessert', 
-    'Beverage', 
-    'Salad', 
-    'Soup', 
-    'Appetizer'
+    'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 
+    'Beverage', 'Salad', 'Soup', 'Appetizer'
   ];
 
   // Effect to update local storage whenever the recipes state changes
   useEffect(() => {
     localStorage.setItem('recipes', JSON.stringify(recipes));
   }, [recipes]);
+
+  // Function to handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewRecipe(prevRecipe => ({
+      ...prevRecipe,
+      [name]: value
+    }));
+  };
 
   // Function to handle adding or updating a recipe
   const handleAddRecipe = (e) => {
@@ -89,11 +91,10 @@ function AddRecipe() {
         image: base64Image
       };
 
-      if (editMode) {
+      if (editMode && currentIndex !== null) {
         // Update the existing recipe
-        const updatedRecipes = recipes.map((recipe, index) =>
-          index === currentIndex ? recipeWithImage : recipe
-        );
+        const updatedRecipes = [...recipes];
+        updatedRecipes[currentIndex] = recipeWithImage;
         setRecipes(updatedRecipes);
       } else {
         // Add a new recipe
@@ -132,15 +133,16 @@ function AddRecipe() {
       servings: '',
       image: ''
     });
-    // Clear all input fields
-    recipeNameRef.current.value = '';
-    ingredientsRef.current.value = '';
-    instructionsRef.current.value = '';
-    categoryRef.current.value = '';
-    prepTimeRef.current.value = '';
-    cookTimeRef.current.value = '';
-    servingsRef.current.value = '';
-    imageRef.current.value = '';
+    
+    // Reset all input fields
+    if (recipeNameRef.current) recipeNameRef.current.value = '';
+    if (ingredientsRef.current) ingredientsRef.current.value = '';
+    if (instructionsRef.current) instructionsRef.current.value = '';
+    if (categoryRef.current) categoryRef.current.value = '';
+    if (prepTimeRef.current) prepTimeRef.current.value = '';
+    if (cookTimeRef.current) cookTimeRef.current.value = '';
+    if (servingsRef.current) servingsRef.current.value = '';
+    if (imageRef.current) imageRef.current.value = '';
   };
 
   // Function to delete a recipe by its index
@@ -152,18 +154,21 @@ function AddRecipe() {
   // Function to edit an existing recipe
   const handleEditRecipe = (index) => {
     const recipe = recipes[index];
+    
     // Set the form with the recipe details to edit
     setNewRecipe(recipe);
-    recipeNameRef.current.value = recipe.name;
-    ingredientsRef.current.value = recipe.ingredients;
-    instructionsRef.current.value = recipe.instructions;
-    categoryRef.current.value = recipe.category;
-    prepTimeRef.current.value = recipe.prepTime;
-    cookTimeRef.current.value = recipe.cookTime;
-    servingsRef.current.value = recipe.servings;
     setCurrentIndex(index);
     setEditMode(true);
     setOpen(true);
+
+    // Update input fields
+    if (recipeNameRef.current) recipeNameRef.current.value = recipe.name;
+    if (ingredientsRef.current) ingredientsRef.current.value = recipe.ingredients;
+    if (instructionsRef.current) instructionsRef.current.value = recipe.instructions;
+    if (categoryRef.current) categoryRef.current.value = recipe.category;
+    if (prepTimeRef.current) prepTimeRef.current.value = recipe.prepTime;
+    if (cookTimeRef.current) cookTimeRef.current.value = recipe.cookTime;
+    if (servingsRef.current) servingsRef.current.value = recipe.servings;
   };
 
   // Function to filter recipes based on the search query
@@ -179,7 +184,11 @@ function AddRecipe() {
   );
 
   return (
-    <div className="App" style={{ backgroundColor: darkMode ? '#333' : '#fff', color: darkMode ? '#fff' : '#000', minHeight: '100vh' }}>
+    <div className="App" style={{ 
+      backgroundColor: darkMode ? '#333' : '#fff', 
+      color: darkMode ? '#fff' : '#000', 
+      minHeight: '100vh' 
+    }}>
       <div style={{ padding: '20px' }}>
         <div style={{ marginBottom: '20px' }}>
           {/* Search input for filtering recipes */}
@@ -187,11 +196,28 @@ function AddRecipe() {
             type="text"
             placeholder="Search recipes..."
             onChange={(e) => searchRecipes(e.target.value)}
-            style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+            style={{ 
+              width: '100%', 
+              padding: '8px', 
+              marginBottom: '10px' 
+            }}
           />
           {/* Button to open the form modal for adding a new recipe */}
-          <button onClick={() => setOpen(true)} style={{ width: '100%', padding: '10px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}>
-            {editMode ? 'Update Recipe' : 'New Recipe'}
+          <button 
+            onClick={() => {
+              resetForm();
+              setOpen(true);
+            }} 
+            style={{ 
+              width: '100%', 
+              padding: '10px', 
+              background: '#007bff', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '4px' 
+            }}
+          >
+            New Recipe
           </button>
         </div>
 
@@ -202,10 +228,42 @@ function AddRecipe() {
             <form onSubmit={handleAddRecipe}>
               <div style={{ marginBottom: '10px' }}>
                 {/* Input fields for the recipe form */}
-                <input type="text" placeholder="Recipe Name" ref={recipeNameRef} className="input-field" required />
-                <textarea placeholder="Ingredients" ref={ingredientsRef} className="input-field" required />
-                <textarea placeholder="Instructions" ref={instructionsRef} className="input-field" required />
-                <select ref={categoryRef} className="input-field category-select" required>
+                <input 
+                  type="text" 
+                  name="name"
+                  placeholder="Recipe Name" 
+                  ref={recipeNameRef} 
+                  className="input-field" 
+                  onChange={handleInputChange}
+                  value={newRecipe.name}
+                  required 
+                />
+                <textarea 
+                  name="ingredients"
+                  placeholder="Ingredients" 
+                  ref={ingredientsRef} 
+                  className="input-field" 
+                  onChange={handleInputChange}
+                  value={newRecipe.ingredients}
+                  required 
+                />
+                <textarea 
+                  name="instructions"
+                  placeholder="Instructions" 
+                  ref={instructionsRef} 
+                  className="input-field" 
+                  onChange={handleInputChange}
+                  value={newRecipe.instructions}
+                  required 
+                />
+                <select 
+                  name="category"
+                  ref={categoryRef} 
+                  className="input-field category-select" 
+                  onChange={handleInputChange}
+                  value={newRecipe.category}
+                  required
+                >
                   <option value="">Select Category</option>
                   {categories.map((category, index) => (
                     <option key={index} value={category}>
@@ -213,15 +271,56 @@ function AddRecipe() {
                     </option>
                   ))}
                 </select>
-                <input type="text" placeholder="Preparation Time" ref={prepTimeRef} className="input-field" required />
-                <input type="text" placeholder="Cooking Time" ref={cookTimeRef} className="input-field" required />
-                <input type="number" placeholder="Servings" ref={servingsRef} className="input-field" required />
-                <input type="file" ref={imageRef} style={{ marginBottom: '10px' }} />
+                <input 
+                  type="text" 
+                  name="prepTime"
+                  placeholder="Preparation Time" 
+                  ref={prepTimeRef} 
+                  className="input-field" 
+                  onChange={handleInputChange}
+                  value={newRecipe.prepTime}
+                  required 
+                />
+                <input 
+                  type="text" 
+                  name="cookTime"
+                  placeholder="Cooking Time" 
+                  ref={cookTimeRef} 
+                  className="input-field" 
+                  onChange={handleInputChange}
+                  value={newRecipe.cookTime}
+                  required 
+                />
+                <input 
+                  type="number" 
+                  name="servings"
+                  placeholder="Servings" 
+                  ref={servingsRef} 
+                  className="input-field" 
+                  onChange={handleInputChange}
+                  value={newRecipe.servings}
+                  required 
+                />
+                <input 
+                  type="file" 
+                  name="image"
+                  ref={imageRef} 
+                  style={{ marginBottom: '10px' }} 
+                />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 {/* Cancel and Submit buttons */}
-                <button type="button" onClick={() => setOpen(false)} className="cancel-button">Cancel</button>
-                <button type="submit" className="create-button">
+                <button 
+                  type="button" 
+                  onClick={() => setOpen(false)} 
+                  className="cancel-button"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="create-button"
+                >
                   {editMode ? 'Update Recipe' : 'Create Recipe'}
                 </button>
               </div>
@@ -229,10 +328,23 @@ function AddRecipe() {
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          marginBottom: '20px' 
+        }}>
           <h1>Recipes</h1>
           {/* Button to toggle between dark and light modes */}
-          <button onClick={() => setDarkMode(!darkMode)} style={{ padding: '10px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}>
+          <button 
+            onClick={() => setDarkMode(!darkMode)} 
+            style={{ 
+              padding: '10px', 
+              background: '#007bff', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '4px' 
+            }}
+          >
             {darkMode ? 'Light Mode' : 'Dark Mode'}
           </button>
         </div>
@@ -240,7 +352,15 @@ function AddRecipe() {
         {/* Display filtered recipes */}
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map((recipe, index) => (
-            <div key={index} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px', borderRadius: '4px' }}>
+            <div 
+              key={index} 
+              style={{ 
+                border: '1px solid #ccc', 
+                padding: '10px', 
+                marginBottom: '10px', 
+                borderRadius: '4px' 
+              }}
+            >
               <h2>{recipe.name}</h2>
               <p><strong>Category:</strong> {recipe.category}</p>
               <p><strong>Ingredients:</strong> {recipe.ingredients}</p>
@@ -248,19 +368,42 @@ function AddRecipe() {
               <p><strong>Preparation Time:</strong> {recipe.prepTime}</p>
               <p><strong>Cooking Time:</strong> {recipe.cookTime}</p>
               <p><strong>Servings:</strong> {recipe.servings}</p>
+              
               {/* Show recipe image if available */}
               {recipe.image && (
                 <img
                   src={recipe.image}
                   alt={recipe.name}
-                  style={{ width: '100px', height: '100px', objectFit: 'cover', cursor: 'pointer' }}
+                  style={{ 
+                    width: '100px', 
+                    height: '100px', 
+                    objectFit: 'cover', 
+                    cursor: 'pointer' 
+                  }}
                   onClick={() => setZoomImage(recipe.image)}
                 />
               )}
-              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+              
+              <div 
+                style={{ 
+                  marginTop: '10px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between' 
+                }}
+              >
                 {/* Edit and Delete buttons for each recipe */}
-                <button onClick={() => handleEditRecipe(index)} className="edit-button">Edit</button>
-                <button onClick={() => handleDeleteRecipe(index)} className="delete-button">Delete</button>
+                <button 
+                  onClick={() => handleEditRecipe(index)} 
+                  className="edit-button"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => handleDeleteRecipe(index)} 
+                  className="delete-button"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))
@@ -270,8 +413,15 @@ function AddRecipe() {
 
         {/* Zoomed-in image modal when the user clicks on a recipe image */}
         {zoomImage && (
-          <div className="zoomed-image-container" onClick={() => setZoomImage(null)}>
-            <img src={zoomImage} alt="Zoomed" className="zoomed-image" />
+          <div 
+            className="zoomed-image-container" 
+            onClick={() => setZoomImage(null)}
+          >
+            <img 
+              src={zoomImage} 
+              alt="Zoomed" 
+              className="zoomed-image" 
+            />
           </div>
         )}
       </div>
