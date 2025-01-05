@@ -1,18 +1,44 @@
-import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
 import './recipe.css';
 
-const API_URL = 'http://localhost:3001/recipes'; // Adjust the URL as needed
+function AddRecipe() {
+  // State to manage the list of recipes, initialized from local storage
+  const [recipes, setRecipes] = useState(() => {
+    const storedRecipes = localStorage.getItem('recipes');
+    return storedRecipes ? JSON.parse(storedRecipes) : [];
+  });
 
-export default function RecipeManager() {
-  const [recipes, setRecipes] = useState([]);
+  // State to control modal visibility for adding/editing recipes
   const [open, setOpen] = useState(false);
+
+  // State to track if the user is editing an existing recipe
   const [editMode, setEditMode] = useState(false);
+
+  // State to track the index of the recipe being edited
   const [currentIndex, setCurrentIndex] = useState(null);
+
+  // State to manage the search query input
   const [searchQuery, setSearchQuery] = useState('');
+
+  // State to toggle between light and dark mode
   const [darkMode, setDarkMode] = useState(false);
+
+  // State to handle zooming in on the recipe image
   const [zoomImage, setZoomImage] = useState(null);
 
+  // State to manage the current form values for adding or editing a recipe
+  const [newRecipe, setNewRecipe] = useState({
+    name: '',
+    ingredients: '',
+    instructions: '',
+    category: '',
+    prepTime: '',
+    cookTime: '',
+    servings: '',
+    image: ''
+  });
+
+  // Refs to manage form input fields
   const recipeNameRef = useRef(null);
   const ingredientsRef = useRef(null);
   const instructionsRef = useRef(null);
@@ -22,104 +48,112 @@ export default function RecipeManager() {
   const servingsRef = useRef(null);
   const imageRef = useRef(null);
 
-  const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Beverage', 'Salad', 'Soup', 'Appetizer'];
+  // Array of predefined recipe categories
+  const categories = [
+    'Breakfast', 
+    'Lunch', 
+    'Dinner', 
+    'Snack', 
+    'Dessert', 
+    'Beverage', 
+    'Salad', 
+    'Soup', 
+    'Appetizer'
+  ];
 
+  // Effect to update local storage whenever the recipes state changes
   useEffect(() => {
-    // Try to fetch stored recipes from JSON Server on component mount
-    axios.get(API_URL)
-      .then(response => {
-        setRecipes(response.data);
-        // Save recipes to local storage
-        localStorage.setItem('recipes', JSON.stringify(response.data));
-      })
-      .catch(error => {
-        console.error('Error fetching recipes:', error);
-        // Load recipes from local storage if fetch fails
-        const savedRecipes = localStorage.getItem('recipes');
-        if (savedRecipes) {
-          setRecipes(JSON.parse(savedRecipes));
-        } else {
-          console.error('No saved recipes found.');
-        }
-      });
-  }, []);
+    localStorage.setItem('recipes', JSON.stringify(recipes));
+  }, [recipes]);
 
-  function addOrUpdateRecipe() {
+  // Function to handle adding or updating a recipe
+  const handleAddRecipe = (e) => {
+    e.preventDefault();
+
+    // Get the selected image file from the input
     const imageFile = imageRef.current.files[0];
 
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newRecipe = {
-          name: recipeNameRef.current.value,
-          ingredients: ingredientsRef.current.value,
-          instructions: instructionsRef.current.value,
-          category: categoryRef.current.value,
-          prepTime: prepTimeRef.current.value,
-          cookTime: cookTimeRef.current.value,
-          servings: servingsRef.current.value,
-          image: reader.result, // Store image as base64 string
-        };
+    // Helper function to convert the image file to a Base64 string
+    const handleImageUpload = async (file) => {
+      if (file) {
+        const base64Image = await getBase64(file);
+        return base64Image;
+      }
+      return newRecipe.image;
+    };
 
-        saveRecipe(newRecipe);
-      };
-      reader.readAsDataURL(imageFile);
-    } else {
-      const newRecipe = {
-        name: recipeNameRef.current.value,
-        ingredients: ingredientsRef.current.value,
-        instructions: instructionsRef.current.value,
-        category: categoryRef.current.value,
-        prepTime: prepTimeRef.current.value,
-        cookTime: cookTimeRef.current.value,
-        servings: servingsRef.current.value,
-        image: null,
+    // Upload the image and either add or update the recipe in the list
+    handleImageUpload(imageFile).then((base64Image) => {
+      const recipeWithImage = {
+        ...newRecipe,
+        image: base64Image
       };
 
-      saveRecipe(newRecipe);
-    }
-  }
-
-  function saveRecipe(newRecipe) {
-    if (editMode) {
-      // Update existing recipe
-      axios.put(`${API_URL}/${recipes[currentIndex].id}`, newRecipe)
-        .then(() => {
-          const updatedRecipes = [...recipes];
-          updatedRecipes[currentIndex] = { ...newRecipe, id: recipes[currentIndex].id };
-          setRecipes(updatedRecipes);
-          localStorage.setItem('recipes', JSON.stringify(updatedRecipes)); // Save updated recipes
-          setEditMode(false);
-          setCurrentIndex(null);
-          setOpen(false);
-        })
-        .catch(error => console.error('Error updating recipe:', error));
-    } else {
-      // Add new recipe
-      axios.post(API_URL, newRecipe)
-        .then(response => {
-          const newRecipes = [...recipes, response.data];
-          setRecipes(newRecipes);
-          localStorage.setItem('recipes', JSON.stringify(newRecipes)); // Save new recipes
-          setOpen(false);
-        })
-        .catch(error => console.error('Error adding recipe:', error));
-    }
-  }
-
-  function deleteRecipe(index) {
-    const recipeToDelete = recipes[index];
-    axios.delete(`${API_URL}/${recipeToDelete.id}`)
-      .then(() => {
-        const updatedRecipes = recipes.filter((_, i) => i !== index);
+      if (editMode) {
+        // Update the existing recipe
+        const updatedRecipes = recipes.map((recipe, index) =>
+          index === currentIndex ? recipeWithImage : recipe
+        );
         setRecipes(updatedRecipes);
-        localStorage.setItem('recipes', JSON.stringify(updatedRecipes)); // Update local storage
-      })
-      .catch(error => console.error('Error deleting recipe:', error));
-  }
+      } else {
+        // Add a new recipe
+        setRecipes([...recipes, recipeWithImage]);
+      }
 
-  function editRecipe(index) {
+      // Reset the form after submitting
+      resetForm();
+    }).catch((error) => {
+      console.error('Error adding/updating recipe:', error);
+    });
+  };
+
+  // Utility function to convert a file to Base64 format
+  const getBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Function to reset the form fields and states
+  const resetForm = () => {
+    setOpen(false);
+    setEditMode(false);
+    setCurrentIndex(null);
+    setNewRecipe({
+      name: '',
+      ingredients: '',
+      instructions: '',
+      category: '',
+      prepTime: '',
+      cookTime: '',
+      servings: '',
+      image: ''
+    });
+    // Clear all input fields
+    recipeNameRef.current.value = '';
+    ingredientsRef.current.value = '';
+    instructionsRef.current.value = '';
+    categoryRef.current.value = '';
+    prepTimeRef.current.value = '';
+    cookTimeRef.current.value = '';
+    servingsRef.current.value = '';
+    imageRef.current.value = '';
+  };
+
+  // Function to delete a recipe by its index
+  const handleDeleteRecipe = (index) => {
+    const updatedRecipes = recipes.filter((_, i) => i !== index);
+    setRecipes(updatedRecipes);
+  };
+
+  // Function to edit an existing recipe
+  const handleEditRecipe = (index) => {
     const recipe = recipes[index];
+    // Set the form with the recipe details to edit
+    setNewRecipe(recipe);
     recipeNameRef.current.value = recipe.name;
     ingredientsRef.current.value = recipe.ingredients;
     instructionsRef.current.value = recipe.instructions;
@@ -130,12 +164,14 @@ export default function RecipeManager() {
     setCurrentIndex(index);
     setEditMode(true);
     setOpen(true);
-  }
+  };
 
-  function searchRecipes(query) {
+  // Function to filter recipes based on the search query
+  const searchRecipes = (query) => {
     setSearchQuery(query.toLowerCase());
-  }
+  };
 
+  // Filter recipes based on the search query
   const filteredRecipes = recipes.filter((recipe) =>
     recipe.name.toLowerCase().includes(searchQuery) ||
     recipe.ingredients.toLowerCase().includes(searchQuery) ||
@@ -146,87 +182,101 @@ export default function RecipeManager() {
     <div className="App" style={{ backgroundColor: darkMode ? '#333' : '#fff', color: darkMode ? '#fff' : '#000', minHeight: '100vh' }}>
       <div style={{ padding: '20px' }}>
         <div style={{ marginBottom: '20px' }}>
+          {/* Search input for filtering recipes */}
           <input
             type="text"
             placeholder="Search recipes..."
             onChange={(e) => searchRecipes(e.target.value)}
             style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
           />
+          {/* Button to open the form modal for adding a new recipe */}
           <button onClick={() => setOpen(true)} style={{ width: '100%', padding: '10px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}>
             {editMode ? 'Update Recipe' : 'New Recipe'}
           </button>
         </div>
 
+        {/* Modal for adding/editing a recipe */}
         {open && (
           <div className="modal-container">
             <h2>{editMode ? 'Edit Recipe' : 'New Recipe'}</h2>
-            <div style={{ marginBottom: '10px' }}>
-              <input type="text" placeholder="Recipe Name" ref={recipeNameRef} className="input-field" />
-              <textarea placeholder="Ingredients" ref={ingredientsRef} className="input-field" />
-              <textarea placeholder="Instructions" ref={instructionsRef} className="input-field" />
-              <select ref={categoryRef} className="input-field category-select">
-                <option value="">Select Category</option>
-                {categories.map((category, index) => (
-                  <option key={index} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              <input type="text" placeholder="Preparation Time" ref={prepTimeRef} className="input-field" />
-              <input type="text" placeholder="Cooking Time" ref={cookTimeRef} className="input-field" />
-              <input type="number" placeholder="Servings" ref={servingsRef} className="input-field" />
-              <input type="file" ref={imageRef} style={{ marginBottom: '10px' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setOpen(false)} className="cancel-button">Cancel</button>
-              <button onClick={addOrUpdateRecipe} className="create-button">
-                {editMode ? 'Update Recipe' : 'Create Recipe'}
-              </button>
-            </div>
+            <form onSubmit={handleAddRecipe}>
+              <div style={{ marginBottom: '10px' }}>
+                {/* Input fields for the recipe form */}
+                <input type="text" placeholder="Recipe Name" ref={recipeNameRef} className="input-field" required />
+                <textarea placeholder="Ingredients" ref={ingredientsRef} className="input-field" required />
+                <textarea placeholder="Instructions" ref={instructionsRef} className="input-field" required />
+                <select ref={categoryRef} className="input-field category-select" required>
+                  <option value="">Select Category</option>
+                  {categories.map((category, index) => (
+                    <option key={index} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Preparation Time" ref={prepTimeRef} className="input-field" required />
+                <input type="text" placeholder="Cooking Time" ref={cookTimeRef} className="input-field" required />
+                <input type="number" placeholder="Servings" ref={servingsRef} className="input-field" required />
+                <input type="file" ref={imageRef} style={{ marginBottom: '10px' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                {/* Cancel and Submit buttons */}
+                <button type="button" onClick={() => setOpen(false)} className="cancel-button">Cancel</button>
+                <button type="submit" className="create-button">
+                  {editMode ? 'Update Recipe' : 'Create Recipe'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h1>Recipes</h1>
+          {/* Button to toggle between dark and light modes */}
           <button onClick={() => setDarkMode(!darkMode)} style={{ padding: '10px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}>
             {darkMode ? 'Light Mode' : 'Dark Mode'}
           </button>
         </div>
 
+        {/* Display filtered recipes */}
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map((recipe, index) => (
-            <div key={index} className="recipe-card">
+            <div key={index} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px', borderRadius: '4px' }}>
+              <h2>{recipe.name}</h2>
+              <p><strong>Category:</strong> {recipe.category}</p>
+              <p><strong>Ingredients:</strong> {recipe.ingredients}</p>
+              <p><strong>Instructions:</strong> {recipe.instructions}</p>
+              <p><strong>Preparation Time:</strong> {recipe.prepTime}</p>
+              <p><strong>Cooking Time:</strong> {recipe.cookTime}</p>
+              <p><strong>Servings:</strong> {recipe.servings}</p>
+              {/* Show recipe image if available */}
               {recipe.image && (
                 <img
                   src={recipe.image}
                   alt={recipe.name}
-                  className="recipe-image"
+                  style={{ width: '100px', height: '100px', objectFit: 'cover', cursor: 'pointer' }}
                   onClick={() => setZoomImage(recipe.image)}
                 />
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <strong>{recipe.name}</strong>
-                <button onClick={() => editRecipe(index)} className="edit-button">Edit</button>
-                <button onClick={() => deleteRecipe(index)} className="delete-button">Delete</button>
+              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                {/* Edit and Delete buttons for each recipe */}
+                <button onClick={() => handleEditRecipe(index)} className="edit-button">Edit</button>
+                <button onClick={() => handleDeleteRecipe(index)} className="delete-button">Delete</button>
               </div>
-              <p><strong>Ingredients:</strong> {recipe.ingredients}</p>
-              <p><strong>Instructions:</strong> {recipe.instructions}</p>
-              <p><strong>Category:</strong> {recipe.category}</p>
-              <p><strong>Prep Time:</strong> {recipe.prepTime}</p>
-              <p><strong>Cook Time:</strong> {recipe.cookTime}</p>
-              <p><strong>Servings:</strong> {recipe.servings}</p>
             </div>
           ))
         ) : (
           <p>No recipes found.</p>
         )}
-      </div>
 
-      {zoomImage && (
-        <div className="zoom-modal" onClick={() => setZoomImage(null)}>
-          <img src={zoomImage} alt="Zoomed" className="zoomed-image" />
-        </div>
-      )}
+        {/* Zoomed-in image modal when the user clicks on a recipe image */}
+        {zoomImage && (
+          <div className="zoomed-image-container" onClick={() => setZoomImage(null)}>
+            <img src={zoomImage} alt="Zoomed" className="zoomed-image" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+export default AddRecipe;
