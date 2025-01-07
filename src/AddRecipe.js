@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './recipe.css';
 
 function AddRecipe() {
+
   // State to manage the list of recipes, initialized from local storage
   const [recipes, setRecipes] = useState(() => {
     const storedRecipes = localStorage.getItem('recipes');
@@ -9,6 +10,12 @@ function AddRecipe() {
   });
 
   // State to control modal visibility for adding/editing recipes
+
+  const [recipes, setRecipes] = useState(() => {
+    // Retrieve recipes from local storage
+    const storedRecipes = localStorage.getItem('recipes');
+    return storedRecipes ? JSON.parse(storedRecipes) : [];
+  });
   const [open, setOpen] = useState(false);
 
   // State to track if the user is editing an existing recipe
@@ -25,6 +32,16 @@ function AddRecipe() {
 
   // State to handle zooming in on the recipe image
   const [zoomImage, setZoomImage] = useState(null);
+  const [newRecipe, setNewRecipe] = useState({
+    name: '',
+    ingredients: '',
+    instructions: '',
+    category: '',
+    prepTime: '',
+    cookTime: '',
+    servings: '',
+    image: ''
+  });
 
   // State to manage the current form values for adding or editing a recipe
   const [newRecipe, setNewRecipe] = useState({
@@ -52,10 +69,22 @@ function AddRecipe() {
   const categories = [
     'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 
     'Beverage', 'Salad', 'Soup', 'Appetizer'
+
+  const categories = [
+    'Breakfast', 
+    'Lunch', 
+    'Dinner', 
+    'Snack', 
+    'Dessert', 
+    'Beverage', 
+    'Salad', 
+    'Soup', 
+    'Appetizer'
   ];
 
   // Effect to update local storage whenever the recipes state changes
   useEffect(() => {
+
     localStorage.setItem('recipes', JSON.stringify(recipes));
   }, [recipes]);
 
@@ -76,6 +105,15 @@ function AddRecipe() {
     const imageFile = imageRef.current.files[0];
 
     // Helper function to convert the image file to a Base64 string
+
+    // Update local storage whenever recipes change
+    localStorage.setItem('recipes', JSON.stringify(recipes));
+  }, [recipes]);
+
+  const handleAddRecipe = (e) => {
+    e.preventDefault();
+    const imageFile = imageRef.current.files[0];
+
     const handleImageUpload = async (file) => {
       if (file) {
         const base64Image = await getBase64(file);
@@ -85,6 +123,7 @@ function AddRecipe() {
     };
 
     // Upload the image and either add or update the recipe in the list
+
     handleImageUpload(imageFile).then((base64Image) => {
       const recipeWithImage = {
         ...newRecipe,
@@ -109,6 +148,22 @@ function AddRecipe() {
   };
 
   // Utility function to convert a file to Base64 format
+      if (editMode) {
+        // Update existing recipe
+        const updatedRecipes = recipes.map((recipe, index) =>
+          index === currentIndex ? recipeWithImage : recipe
+        );
+        setRecipes(updatedRecipes);
+      } else {
+        // Add new recipe
+        setRecipes([...recipes, recipeWithImage]);
+      }
+      resetForm();
+    }).catch((error) => {
+      console.error('Error adding/updating recipe:', error);
+    });
+  };
+
   const getBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -146,6 +201,18 @@ function AddRecipe() {
   };
 
   // Function to delete a recipe by its index
+
+    recipeNameRef.current.value = '';
+    ingredientsRef.current.value = '';
+    instructionsRef.current.value = '';
+    categoryRef.current.value = '';
+    prepTimeRef.current.value = '';
+    cookTimeRef.current.value = '';
+    servingsRef.current.value = '';
+    imageRef.current.value = '';
+  };
+
+
   const handleDeleteRecipe = (index) => {
     const updatedRecipes = recipes.filter((_, i) => i !== index);
     setRecipes(updatedRecipes);
@@ -172,6 +239,22 @@ function AddRecipe() {
   };
 
   // Function to filter recipes based on the search query
+
+  const handleEditRecipe = (index) => {
+    const recipe = recipes[index];
+    setNewRecipe(recipe);
+    recipeNameRef.current.value = recipe.name;
+    ingredientsRef.current.value = recipe.ingredients;
+    instructionsRef.current.value = recipe.instructions;
+    categoryRef.current.value = recipe.category;
+    prepTimeRef.current.value = recipe.prepTime;
+    cookTimeRef.current.value = recipe.cookTime;
+    servingsRef.current.value = recipe.servings;
+    setCurrentIndex(index);
+    setEditMode(true);
+    setOpen(true);
+  };
+
   const searchRecipes = (query) => {
     setSearchQuery(query.toLowerCase());
   };
@@ -227,6 +310,7 @@ function AddRecipe() {
             <h2>{editMode ? 'Edit Recipe' : 'New Recipe'}</h2>
             <form onSubmit={handleAddRecipe}>
               <div style={{ marginBottom: '10px' }}>
+
                 {/* Input fields for the recipe form */}
                 <input 
                   type="text" 
@@ -264,6 +348,11 @@ function AddRecipe() {
                   value={newRecipe.category}
                   required
                 >
+                <input type="text" placeholder="Recipe Name" ref={recipeNameRef} className="input-field" required />
+                <textarea placeholder="Ingredients" ref={ingredientsRef} className="input-field" required />
+                <textarea placeholder="Instructions" ref={instructionsRef} className="input-field" required />
+                <select ref={categoryRef} className="input-field category-select" required>
+
                   <option value="">Select Category</option>
                   {categories.map((category, index) => (
                     <option key={index} value={category}>
@@ -271,6 +360,7 @@ function AddRecipe() {
                     </option>
                   ))}
                 </select>
+
                 <input 
                   type="text" 
                   name="prepTime"
@@ -321,6 +411,16 @@ function AddRecipe() {
                   type="submit" 
                   className="create-button"
                 >
+=======
+                <input type="text" placeholder="Preparation Time" ref={prepTimeRef} className="input-field" required />
+                <input type="text" placeholder="Cooking Time" ref={cookTimeRef} className="input-field" required />
+                <input type="number" placeholder="Servings" ref={servingsRef} className="input-field" required />
+                <input type="file" ref={imageRef} style={{ marginBottom: '10px' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <button type="button" onClick={() => setOpen(false)} className="cancel-button">Cancel</button>
+                <button type="submit" className="create-button">
+>>>>>>> a285153005db7d5ca3aa1fbdb4931526de0df0e0
                   {editMode ? 'Update Recipe' : 'Create Recipe'}
                 </button>
               </div>
@@ -383,6 +483,7 @@ function AddRecipe() {
                   onClick={() => setZoomImage(recipe.image)}
                 />
               )}
+<<<<<<< HEAD
               
               <div 
                 style={{ 
@@ -404,6 +505,12 @@ function AddRecipe() {
                 >
                   Delete
                 </button>
+=======
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <strong>{recipe.name}</strong>
+                <button onClick={() => handleEditRecipe(index)} className="edit-button">Edit</button>
+                <button onClick={() => handleDeleteRecipe(index)} className="delete-button">Delete</button>
+>>>>>>> a285153005db7d5ca3aa1fbdb4931526de0df0e0
               </div>
             </div>
           ))
@@ -411,6 +518,7 @@ function AddRecipe() {
           <p>No recipes found.</p>
         )}
 
+<<<<<<< HEAD
         {/* Zoomed-in image modal when the user clicks on a recipe image */}
         {zoomImage && (
           <div 
@@ -422,6 +530,11 @@ function AddRecipe() {
               alt="Zoomed" 
               className="zoomed-image" 
             />
+=======
+        {zoomImage && (
+          <div className="zoom-modal" onClick={() => setZoomImage(null)}>
+            <img src={zoomImage} alt="Zoomed" className="zoomed-image" />
+>>>>>>> a285153005db7d5ca3aa1fbdb4931526de0df0e0
           </div>
         )}
       </div>
@@ -429,4 +542,9 @@ function AddRecipe() {
   );
 }
 
+<<<<<<< HEAD
 export default AddRecipe;
+=======
+export default AddRecipe;
+
+>>>>>>> a285153005db7d5ca3aa1fbdb4931526de0df0e0

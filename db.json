@@ -28,6 +28,7 @@
       "id": 1,
       "username": "admin",
       "password": "password123",
+<<<<<<< HEAD
       "email": "admin@example.com"
     },
     {
@@ -35,6 +36,15 @@
       "username": "john_doe",
       "password": "secret",
       "email": "john@example.com"
+=======
+      "email": "admin@gmail.com"
+    },
+    {
+      "id": 2,
+      "username": "merry mon",
+      "password": "secret",
+      "email": "marry@gmail.com"
+>>>>>>> a285153005db7d5ca3aa1fbdb4931526de0df0e0
     }
   ]
 }
