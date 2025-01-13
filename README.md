@@ -48,12 +48,11 @@ Proper validation is implemented for input fields to prevent errors and ensure d
 Installation and Setup
 Clone the repository:
 
-git clone https://github.com/yourusername/online-recipe-app.git
+git clone https://github.com/eungobs/recipe-app.git
 Navigate to the project directory:
 
-bash
-Copy code
-cd online-recipe-app
+
+cd fast-track-recipe
 Install dependencies:
 
 
