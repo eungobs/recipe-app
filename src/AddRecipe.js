@@ -1,19 +1,24 @@
+// Import necessary React hooks and CSS
 import React, { useState, useEffect, useRef } from 'react';
 import './recipe.css';
 
 function AddRecipe() {
-  // State declarations
+  // State Declarations
+  // Initialize recipes from localStorage or empty array
   const [recipes, setRecipes] = useState(() => {
     const storedRecipes = localStorage.getItem('recipes');
     return storedRecipes ? JSON.parse(storedRecipes) : [];
   });
 
-  const [open, setOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
-  const [zoomImage, setZoomImage] = useState(null);
+  // State variables for managing component's UI and functionality
+  const [open, setOpen] = useState(false); // Controls recipe form modal visibility
+  const [editMode, setEditMode] = useState(false); // Toggles between add and edit mode
+  const [currentIndex, setCurrentIndex] = useState(null); // Tracks the index of recipe being edited
+  const [searchQuery, setSearchQuery] = useState(''); // Stores search input
+  const [darkMode, setDarkMode] = useState(false); // Manages dark/light mode
+  const [zoomImage, setZoomImage] = useState(null); // Stores image for zooming
+  
+  // State for new recipe form with initial empty values
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     ingredients: '',
@@ -25,7 +30,8 @@ function AddRecipe() {
     image: ''
   });
 
-  // Refs
+  // Refs for form input elements
+  // Allows direct access and manipulation of DOM elements
   const recipeNameRef = useRef(null);
   const ingredientsRef = useRef(null);
   const instructionsRef = useRef(null);
@@ -35,18 +41,18 @@ function AddRecipe() {
   const servingsRef = useRef(null);
   const imageRef = useRef(null);
 
-  // Categories
+  // Predefined recipe categories
   const categories = [
     'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert',
     'Beverage', 'Salad', 'Soup', 'Appetizer'
   ];
 
-  // Effects
+  // Effect to save recipes to localStorage whenever recipes state changes
   useEffect(() => {
     localStorage.setItem('recipes', JSON.stringify(recipes));
   }, [recipes]);
 
-  // Handlers
+  // Handler for input changes in the recipe form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewRecipe(prevRecipe => ({
@@ -55,6 +61,7 @@ function AddRecipe() {
     }));
   };
 
+  // Converts image file to base64 string for storage
   const getBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -64,17 +71,20 @@ function AddRecipe() {
     });
   };
 
+  // Handles adding or updating a recipe
   const handleAddRecipe = async (e) => {
     e.preventDefault();
     const imageFile = imageRef.current.files[0];
 
     try {
+      // Convert image to base64 or use existing image
       const base64Image = imageFile ? await getBase64(imageFile) : newRecipe.image;
       const recipeWithImage = {
         ...newRecipe,
         image: base64Image
       };
 
+      // Update existing recipe or add new recipe
       if (editMode && currentIndex !== null) {
         const updatedRecipes = [...recipes];
         updatedRecipes[currentIndex] = recipeWithImage;
@@ -83,13 +93,16 @@ function AddRecipe() {
         setRecipes([...recipes, recipeWithImage]);
       }
 
+      // Reset form after adding/updating
       resetForm();
     } catch (error) {
       console.error('Error adding/updating recipe:', error);
     }
   };
 
+  // Resets the form to its initial state
   const resetForm = () => {
+    // Reset state variables
     setOpen(false);
     setEditMode(false);
     setCurrentIndex(null);
@@ -115,11 +128,13 @@ function AddRecipe() {
     if (imageRef.current) imageRef.current.value = '';
   };
 
+  // Deletes a recipe from the list
   const handleDeleteRecipe = (index) => {
     const updatedRecipes = recipes.filter((_, i) => i !== index);
     setRecipes(updatedRecipes);
   };
 
+  // Prepares a recipe for editing
   const handleEditRecipe = (index) => {
     const recipe = recipes[index];
     setNewRecipe(recipe);
@@ -137,17 +152,19 @@ function AddRecipe() {
     if (servingsRef.current) servingsRef.current.value = recipe.servings;
   };
 
+  // Filters recipes based on search query
   const searchRecipes = (query) => {
     setSearchQuery(query.toLowerCase());
   };
 
-  // Filter recipes based on search
+  // Filter recipes based on search input
   const filteredRecipes = recipes.filter((recipe) =>
     recipe.name.toLowerCase().includes(searchQuery) ||
     recipe.ingredients.toLowerCase().includes(searchQuery) ||
     recipe.instructions.toLowerCase().includes(searchQuery)
   );
 
+  // Main render method
   return (
     <div className="App" style={{
       backgroundColor: darkMode ? '#333' : '#fff',
@@ -155,7 +172,7 @@ function AddRecipe() {
       minHeight: '100vh'
     }}>
       <div style={{ padding: '20px' }}>
-        {/* Search and New Recipe Button */}
+        {/* Search and New Recipe Section */}
         <div style={{ marginBottom: '20px' }}>
           <input
             type="text"

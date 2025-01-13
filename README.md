@@ -1,4 +1,4 @@
-Online Recipe Application
+Online Recipe Application (Fast-Track Recipe)
 An application built with ReactJS and JSON Server that allows users to store, manage, and refer to their favorite dishes as recipes. The application supports user authentication and provides CRUD operations to handle recipes effectively.
 
 Features
@@ -48,8 +48,6 @@ Proper validation is implemented for input fields to prevent errors and ensure d
 Installation and Setup
 Clone the repository:
 
-bash
-Copy code
 git clone https://github.com/yourusername/online-recipe-app.git
 Navigate to the project directory:
 
@@ -58,20 +56,17 @@ Copy code
 cd online-recipe-app
 Install dependencies:
 
-bash
-Copy code
+
 npm install
 Start JSON Server:
 
-bash
-Copy code
+
 npm run start:mock
 This command runs JSON Server on port 3001 by default.
 
 Start the React Application:
 
-bash
-Copy code
+
 npm start
 The application will run on http://localhost:3000.
 
